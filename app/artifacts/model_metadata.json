@@ -1,0 +1,12 @@
+{
+  "learning_rate": 0.01,
+  "max_iterations": 1000,
+  "class_weight": {
+    "0": 1.0,
+    "1": 2.5403104647906884
+  },
+  "labels": {
+    "0": "ham",
+    "1": "spam"
+  }
+}
