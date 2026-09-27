@@ -1,17 +1,7 @@
-# =========================================================================
-# COPY THIS CODE AS A NEW CELL AT THE VERY BOTTOM OF spam_detection.ipynb
-# (after the cell where perceptron.fit(X_train_dense, Y_train) has run)
-# This file itself does not run on its own - vectorizer and perceptron
-# only exist as trained objects inside the notebook's kernel.
-# =========================================================================
-
 import joblib
 import json
 import os
 
-# Since the notebook lives at the repo root, and app/artifacts/ is a
-# subfolder of the repo root, we can save directly there instead of
-# saving here and moving files afterward.
 os.makedirs("app/artifacts", exist_ok=True)
 
 joblib.dump(vectorizer, "app/artifacts/tfidf.joblib")
