@@ -73,18 +73,11 @@ class Perceptron:
 
             if errors == 0:
                 break
-    
+
+    def decision_score(self, X):
+
+        return np.dot(X, self.weights) + self.bias
+
     def predict(self, X):
         
-        linear_output = np.dot(X, self.weights) + self.bias
-
-        return np.where(linear_output >= 0, 1, 0)    
-
-
-def decision_score(self, X):
-
-    return np.dot(X, self.weights) + self.bias
-
-def predict(self, X):
-    
-    return np.where(self.decision_score(X) >= 0, 1, 0)
+        return np.where(self.decision_score(X) >= 0, 1, 0)
