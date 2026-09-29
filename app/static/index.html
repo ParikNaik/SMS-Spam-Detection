@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spam check for text messages</title>
+<style>
+:root{--bg:#E8EDF1;--card:#fff;--ink:#17232E;--muted:#5B6B78;--line:#CBD5DD;--spam:#B3263E;--spam-bg:#FBE9EC;--ham:#0E7C66;--ham-bg:#E3F4EF;--accent:#1F4E79}
+@media (prefers-color-scheme:dark){:root{--bg:#141C23;--card:#1D2832;--ink:#E7EDF2;--muted:#9AABB8;--line:#33424F;--spam:#FF8A9B;--spam-bg:#3A1F26;--ham:#5FD3B8;--ham-bg:#17332D;--accent:#8CC0EE}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:40px 16px}
+main{width:100%;max-width:480px}
+h1{font-size:28px;font-weight:600;margin:0 0 6px;letter-spacing:-.015em}
+.sub{color:var(--muted);margin:0 0 28px}
+label{display:block;font-weight:600;margin-bottom:8px}
+textarea{width:100%;min-height:120px;resize:vertical;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit}
+textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:14px}
+#go{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 22px;font:inherit;font-weight:600;cursor:pointer}
+@media (prefers-color-scheme:dark){#go{color:#0E1720}}
+#go:disabled{opacity:.6;cursor:wait}
+.ex{margin-top:20px}
+.ex p{margin:0 0 8px;color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:5px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+#result{margin-top:32px}
+.bubble{background:var(--card);border:2px solid var(--line);border-radius:4px 18px 18px 18px;padding:14px 16px;max-width:92%;overflow-wrap:anywhere;white-space:pre-wrap}
+.tag{display:inline-block;margin:10px 0 0 4px;font-weight:600;padding:3px 12px;border-radius:999px;font-size:15px}
+.spam .bubble{border-color:var(--spam)}
+.spam .tag{background:var(--spam-bg);color:var(--spam)}
+.ham .bubble{border-color:var(--ham)}
+.ham .tag{background:var(--ham-bg);color:var(--ham)}
+.meter{margin:22px 4px 0}
+.track{position:relative;display:flex;height:10px;border-radius:5px;overflow:hidden}
+.track span{flex:1}
+.track .l{background:var(--ham-bg)}
+.track .r{background:var(--spam-bg)}
+.pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;background:var(--ink);transform:translateX(-2px);transition:left .5s ease}
+.ends{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:6px}
+.score{color:var(--muted);font-size:14px;margin-top:10px}
+.err{color:var(--spam);background:var(--spam-bg);padding:12px 14px;border-radius:10px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.pin{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Is this text spam?</h1>
+  <p class="sub">Paste a text message and a perceptron trained on 5,572 real SMS messages will judge it.</p>
+
+  <label for="msg">Message</label>
+  <textarea id="msg" maxlength="2500" placeholder="Paste a text message here"></textarea>
+  <div class="row">
+    <span class="hint">Ctrl + Enter to check</span>
+    <button id="go" type="button">Check message</button>
+  </div>
+
+  <div class="ex">
+    <p>Or try an example</p>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div id="result" aria-live="polite" hidden>
+    <div id="verdict">
+      <div class="bubble" id="bubble"></div>
+      <span class="tag" id="tag"></span>
+      <div class="meter">
+        <div class="track"><span class="l"></span><span class="r"></span><div class="pin" id="pin"></div></div>
+        <div class="ends"><span>Leans ham</span><span>Leans spam</span></div>
+        <div class="score" id="score"></div>
+      </div>
+    </div>
+    <div class="err" id="err" hidden></div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const EXAMPLES = [
+  ["Spam prize", "URGENT! You have won a 1 week FREE membership in our £100,000 prize jackpot! Txt the word CLAIM to 81010 now"],
+  ["Spam voicemail", "You have 1 new voicemail. Call 09061234567 to listen"],
+  ["Ham lunch", "Hey, are we still meeting for lunch tomorrow? Let me know what time works for you"],
+  ["Ham running late", "Running about 10 mins late, traffic is terrible. Start without me"]
+];
+EXAMPLES.forEach(([name, text]) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.textContent = name;
+  b.onclick = () => { $("msg").value = text; check(); };
+  $("chips").appendChild(b);
+});
+
+function showError(message) {
+  $("result").hidden = false;
+  $("verdict").hidden = true;
+  $("err").hidden = false;
+  $("err").textContent = message;
+}
+
+function showVerdict(text, data) {
+  const isSpam = data.label === "spam";
+  $("err").hidden = true;
+  $("verdict").hidden = false;
+  $("verdict").className = isSpam ? "spam" : "ham";
+  $("bubble").textContent = text;
+  $("tag").textContent = isSpam ? "Looks like spam" : "Looks like a normal message";
+  // raw scores are tiny (TF-IDF values are small), so stretch them for display only
+  const pos = 100 / (1 + Math.exp(-data.raw_score * 20));
+  $("pin").style.left = pos.toFixed(1) + "%";
+  $("score").textContent = "Model score " + data.raw_score + " (above 0 means spam)";
+  $("result").hidden = false;
+}
+
+async function check() {
+  const text = $("msg").value.trim();
+  if (!text) { showError("Enter a message to check."); return; }
+  $("go").disabled = true;
+  $("go").textContent = "Checking...";
+  try {
+    const res = await fetch("/classify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    if (res.status === 422) throw new Error("The server rejected that message. Use between 1 and 2,500 characters.");
+    if (!res.ok) throw new Error("The model hit an error (status " + res.status + "). Check the terminal running uvicorn.");
+    showVerdict(text, await res.json());
+  } catch (e) {
+    showError(e instanceof TypeError ? "Cannot reach the API. Check that uvicorn is still running." : e.message);
+  } finally {
+    $("go").disabled = false;
+    $("go").textContent = "Check message";
+  }
+}
+
+$("go").onclick = check;
+$("msg").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) check(); });
+</script>
+</body>
+</html>

@@ -11,11 +11,19 @@ from app.model import classifier
 #schemas for request and response validation
 from app.schemas import RequestData, ResponseData
 
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 app = FastAPI(title="SMS Spam Detection API", version="1.0.0")
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    return FileResponse(STATIC_DIR / "index.html")
 
 @app.post("/classify", response_model=ResponseData)
 def classify(request: RequestData):
