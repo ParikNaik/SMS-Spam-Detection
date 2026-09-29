@@ -47,19 +47,14 @@ textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outl
 </head>
 <body>
 <main>
-  <h1>Is this text spam?</h1>
-  <p class="sub">Paste a text message and a perceptron trained on 5,572 real SMS messages will judge it.</p>
+  <h1>SMS Spam Detection</h1>
+  <p class="sub">Input a message you are skeptical of, and we'll help you determine if it's spam.</p>
 
   <label for="msg">Message</label>
   <textarea id="msg" maxlength="2500" placeholder="Paste a text message here"></textarea>
   <div class="row">
     <span class="hint">Ctrl + Enter to check</span>
     <button id="go" type="button">Check message</button>
-  </div>
-
-  <div class="ex">
-    <p>Or try an example</p>
-    <div class="chips" id="chips"></div>
   </div>
 
   <div id="result" aria-live="polite" hidden>
