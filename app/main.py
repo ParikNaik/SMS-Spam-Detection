@@ -5,7 +5,6 @@ from unittest import result
 
 from fastapi import FastAPI, HTTPException
 
-#loaded model instance
 from app.model import classifier
 
 #schemas for request and response validation
