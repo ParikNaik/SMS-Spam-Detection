@@ -101,7 +101,6 @@ function showVerdict(text, data) {
   $("verdict").className = isSpam ? "spam" : "ham";
   $("bubble").textContent = text;
   $("tag").textContent = isSpam ? "Looks like spam" : "Looks like a normal message";
-  // raw scores are tiny (TF-IDF values are small), so stretch them for display only
   const pos = 100 / (1 + Math.exp(-data.raw_score * 20));
   $("pin").style.left = pos.toFixed(1) + "%";
   $("score").textContent = "Model score " + data.raw_score + " (above 0 means spam)";
