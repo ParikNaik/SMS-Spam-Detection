@@ -74,18 +74,8 @@ textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outl
 <script>
 const $ = id => document.getElementById(id);
 
-const EXAMPLES = [
-  ["Spam prize", "URGENT! You have won a 1 week FREE membership in our £100,000 prize jackpot! Txt the word CLAIM to 81010 now"],
-  ["Spam voicemail", "You have 1 new voicemail. Call 09061234567 to listen"],
-  ["Ham lunch", "Hey, are we still meeting for lunch tomorrow? Let me know what time works for you"],
-  ["Ham running late", "Running about 10 mins late, traffic is terrible. Start without me"]
-];
-EXAMPLES.forEach(([name, text]) => {
-  const b = document.createElement("button");
-  b.type = "button"; b.className = "chip"; b.textContent = name;
-  b.onclick = () => { $("msg").value = text; check(); };
-  $("chips").appendChild(b);
-});
+
+
 
 function showError(message) {
   $("result").hidden = false;
