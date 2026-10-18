@@ -5,6 +5,7 @@ import numpy as np
 class Perceptron:
 
     #Constructor for the perceptron class
+    
     def __init__(self, learning_rate=0.01, max_iterations=1000, class_weight=None):
 
         self.learning_rate = learning_rate
